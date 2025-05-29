@@ -234,7 +234,7 @@ void simulateRound(Player& player) {
 };*/
 
 
-int main() {
+int main(int argc, char* argv[]) {
     int rounds = 5;
     int width = 10, height = 10, mines = 10;
     double maxTimeAllowed = 180.0;
@@ -243,6 +243,7 @@ int main() {
     std::mt19937 gen(rd());
 
     Player player1(width, height, mines);
+    Player player2(width, height, mines);
 
     for (int r = 1; r <= rounds; ++r) {
         cout << "Round " << r << "\n";
@@ -256,9 +257,28 @@ int main() {
         roundBoard.computeProximity();  // make a new function to generate proximity from `mines`
 
         player1.board.copyFrom(roundBoard);
+        player2.board.copyFrom(roundBoard);
+
+        cout << "Player 1's turn\n";
         simulateRound(player1);
         player1.calculateScore(player1.board.isComplete(), maxTimeAllowed);
-        cout << "Score after Round " << r << ": " << player1.score << "\n\n";
+        cout << "Player 1's Score after Round " << r << ": " << player1.score << "\n\n";
+
+        cout << "Player 2's turn\n";
+        simulateRound(player2);
+        player2.calculateScore(player2.board.isComplete(), maxTimeAllowed);
+        cout << "Player 2's Score after Round " << r << ": " << player2.score << "\n\n";
+    }
+
+    cout << "\n\nPlayer 1 SCORE: " << player1.score;
+    cout << "\nPlayer 2 SCORE: " << player2.score << "\n\n";
+
+    if (player1.score > player2.score) {
+        cout << "PLAYER 1 is your WINNER" << endl;
+    } else if (player1.score == player2.score) {
+        cout << "It's a TIE" << endl;
+    } else {
+        cout << "PLAYER 2 is your WINNER" << endl;
     }
 
     return 0;
