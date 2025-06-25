@@ -8,9 +8,9 @@ using namespace std;
 class MinesweeperBoard {
 public:
     int width, height, totalMines;
-    std::vector<std::vector<bool>> mines; // true if mine
-    std::vector<std::vector<bool>> revealed;
-    std::vector<std::vector<int>> proximity; // Number of mines in proximity
+    std::vector<std::vector<bool> > mines; // true if mine
+    std::vector<std::vector<bool> > revealed;
+    std::vector<std::vector<int> > proximity; // Number of mines in proximity
 
     MinesweeperBoard(int w, int h, int minesCount)
         : width(w), height(h), totalMines(minesCount) {
@@ -70,7 +70,7 @@ public:
         totalMines = other.totalMines;
         mines = other.mines;
         proximity = other.proximity;
-        revealed = std::vector<std::vector<bool>>(height, std::vector<bool>(width, false)); // fresh
+        revealed = std::vector<std::vector<bool> >(height, std::vector<bool>(width, false)); // fresh
     }
 
 
@@ -135,7 +135,7 @@ public:
     }
 };
 
-void placeMines(std::vector<std::vector<bool>>& mines, int width, int height, int totalMines, std::mt19937& gen) {
+void placeMines(std::vector<std::vector<bool> >& mines, int width, int height, int totalMines, std::mt19937& gen) {
     uniform_int_distribution<> distWidth(0, width-1);
     uniform_int_distribution<> distHeight(0, height-1);
     int i = 0;
@@ -249,7 +249,7 @@ int main(int argc, char* argv[]) {
         cout << "Round " << r << "\n";
 
         // Generate shared minefield
-        vector<vector<bool>> mineGrid(height, vector<bool>(width, false));
+        vector<vector<bool> > mineGrid(height, vector<bool>(width, false));
         placeMines(mineGrid, width, height, mines, gen);
 
         MinesweeperBoard roundBoard(width, height, mines);

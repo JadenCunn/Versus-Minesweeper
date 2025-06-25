@@ -1,82 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multiplayer Minesweeper</title>
-  <!-- <style> 
-    body { font-family: sans-serif; padding: 20px; }
-    .board { display: grid; gap: 1px; margin-bottom: 10px; }
-    .cell {
-      width: 30px; height: 30px;
-      display: flex; align-items: center; justify-content: center;
-      background: #6b7280; color: #000;
-      font-size: 14px; cursor: pointer;
+  <meta charset="UTF-8" />
+  <title>Minesweeper Multiplayer</title>
+  <style>
+    body {
+      font-family: sans-serif;
     }
-    .revealed { background: #e5e7eb; }
-    .mine { background: #f87171; }
-  </style> -->
+    #board {
+      display: grid;
+      grid-template-columns: repeat(10, 30px);
+      gap: 2px;
+      margin-top: 20px;
+    }
+    .cell {
+      width: 30px;
+      height: 30px;
+      background-color: #ccc;
+      text-align: center;
+      line-height: 30px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .revealed {
+      background-color: #eee;
+    }
+    .mine {
+      background-color: red;
+    }
+  </style>
 </head>
 <body>
-  <h1>Multiplayer Minesweeper</h1>
-  <div id="board" class="board"></div>
-  <p id="message" style="color: red;"></p>
-  <button onclick="fetchBoard()">Restart</button>
+  <h1>Minesweeper</h1>
 
+  <div id="input-gameDim">
+    <label> Please Input Board Dimensions!</label>
+    <label> Width: </label><input type="number" min="0" step="1" oninput="validity.valid||(value='');" id="width"/></label>
+    <label> Height: </label><input type="number" min="0" step="1" oninput="validity.valid||(value='');" id="height"/></label>
+    <label> Mines: </label><input type="number" min="0" step="1" oninput="validity.valid||(value='');" id="mines"/></label>
+    <button id="btnStart">Start Game</button>
+  </div>
+
+  <div id="board" style="display:none;"></div>
+
+  <script src="game.js"></script>
   <script>
-    let board = [];
 
-    async function fetchBoard() {
-      const res = await fetch("http://localhost:8000/api/board");
-      board = await res.json();
-      renderBoard();
-      document.getElementById("message").textContent = "";
-    }
+    document.getElementById('btnStart').addEventListener('click', () => {
 
-    async function move(x, y, type) {
-      const res = await fetch("http://localhost:8000/api/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ x, y, type })
-      });
-      const data = await res.json();
-      board = data.board;
-      renderBoard();
-      document.getElementById("message").textContent = data.message || "";
-    }
+      const w = parseInt(document.getElementById('width').value);
+      const h = parseInt(document.getElementById('height').value);
+      const m = parseInt(document.getElementById('mines').value);
 
-    function renderBoard() {
+      if (!w || !h || !m) {
+        alert("Please input values for width, height, and mines");
+        return;
+      }
+
+      const player = new Player(w, h, m)
+      player.board.placeMines();
+      player.board.computeProximity();
+      player.startRound();
       const boardDiv = document.getElementById("board");
-      boardDiv.innerHTML = "";
-      boardDiv.style.gridTemplateColumns = `repeat(${board[0].length}, 30px)`;
 
-      for (let y = 0; y < board.length; y++) {
-        for (let x = 0; x < board[y].length; x++) {
-          const cell = board[y][x];
-          const div = document.createElement("div");
-          div.classList.add("cell");
-          if (cell.revealed) {
-            div.classList.add("revealed");
-            if (cell.mine) {
-              div.classList.add("mine");
-              div.textContent = "💣";
-            } else {
-              div.textContent = cell.adjacent || "";
+      function renderBoard() {
+        boardDiv.innerHTML = '';
+        boardDiv.style.gridTemplateColumns = `repeat(${player.board.width}, 30px)`;
+
+        for (let y = 0; y < player.board.height; y++) {
+          for (let x = 0; x < player.board.width; x++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.x = x;
+            cell.dataset.y = y;
+
+            if (player.board.revealed[y][x]) {
+              cell.classList.add('revealed');
+              if (player.board.mines[y][x]) {
+                cell.textContent = '💣';
+                cell.classList.add('mine');
+              } else {
+                const count = player.board.proximity[y][x];
+                cell.textContent = count > 0 ? count : '';
+              }
             }
-          } else if (cell.flagged) {
-            div.textContent = "🚩";
+
+            cell.addEventListener('click', () => {
+              const mineHit = player.board.revealCell(x, y);
+              renderBoard();
+              if (mineHit) {
+                player.endRound();
+                alert('Game Over!');
+              } else if (player.board.isComplete()) {
+                player.endRound();
+                player.calculateScore(true);
+                alert(`You win! Time: ${player.getTimeTakenSeconds().toFixed(2)}s`);
+              }
+            });
+
+            boardDiv.appendChild(cell);
           }
-          div.oncontextmenu = e => {
-            e.preventDefault();
-            move(x, y, "flag");
-          };
-          div.onclick = () => move(x, y, "reveal");
-          boardDiv.appendChild(div);
         }
       }
-    }
 
-    fetchBoard();
+
+
+      renderBoard();
+
+      document.getElementById('input-gameDim').style.display = 'none';
+      document.getElementById('board').style.display = 'grid';
+    })
   </script>
 </body>
 </html>
